@@ -1,0 +1,14 @@
+[Unit]
+Description=Gost Proxy Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=__HOME__/.system_config/gost/gost -C __HOME__/.system_config/gost/config.yaml
+WorkingDirectory=__HOME__/.system_config/gost
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

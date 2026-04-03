@@ -1,0 +1,10 @@
+# Gost v3 配置文件
+# 文档: https://gost.run/
+
+services:
+  - name: http-proxy
+    addr: "127.0.0.1:1080"
+    handler:
+      type: http
+    listener:
+      type: tcp

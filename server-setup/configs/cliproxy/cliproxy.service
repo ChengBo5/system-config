@@ -1,0 +1,14 @@
+[Unit]
+Description=CLIProxyAPIPlus Reverse Proxy Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=__HOME__/.system_config/cliproxy/cli-proxy-api-plus --config __HOME__/.system_config/cliproxy/config.yaml
+WorkingDirectory=__HOME__/.system_config/cliproxy
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

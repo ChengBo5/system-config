@@ -1,0 +1,16 @@
+# MCP Framework
+mcp
+
+# Binance SDK
+binance-sdk-derivatives-trading-usds-futures
+binance-common
+
+# Data validation
+pydantic
+
+# Environment variables
+python-dotenv
+
+# HTTP server for SSE transport (if needed)
+uvicorn
+starlette
