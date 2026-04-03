@@ -35,8 +35,8 @@ if [[ ! -x "${REAL_HOME}/.system_config/cliproxy/cli-proxy-api-plus" ]]; then
     exit 1
 fi
 
-# 替换 __HOME__ 占位符为实际路径，写入 systemd 目录
-sed "s|__HOME__|${REAL_HOME}|g" "$SERVICE_TEMPLATE" \
+# 替换 __HOME__ 和 __USER__ 占位符为实际值，写入 systemd 目录
+sed -e "s|__HOME__|${REAL_HOME}|g" -e "s|__USER__|${SUDO_USER:-$USER}|g" "$SERVICE_TEMPLATE" \
     > /etc/systemd/system/${SERVICE_NAME}.service
 
 systemctl daemon-reload
