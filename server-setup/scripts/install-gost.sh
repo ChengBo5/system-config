@@ -15,11 +15,11 @@ mkdir -p "$INSTALL_DIR"
 GOST_BIN="${INSTALL_DIR}/gost"
 REPO="go-gost/gost"
 
-# 复制配置文件到安装目录
+# 同步配置文件到安装目录 (每次都覆盖，确保最新)
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-if [[ -f "$SCRIPT_DIR/configs/gost/config.yaml" ]] && [[ ! -f "$INSTALL_DIR/config.yaml" ]]; then
+if [[ -f "$SCRIPT_DIR/configs/gost/config.yaml" ]]; then
     cp "$SCRIPT_DIR/configs/gost/config.yaml" "$INSTALL_DIR/config.yaml"
-    echo "配置文件已复制: $INSTALL_DIR/config.yaml"
+    echo "配置文件已同步: $INSTALL_DIR/config.yaml"
 fi
 
 # 通过 GitHub API 获取最新 release 的版本号
