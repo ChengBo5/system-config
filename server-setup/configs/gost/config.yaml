@@ -1,10 +1,22 @@
 # Gost v3 配置文件
 # 文档: https://gost.run/
+# HTTPS 代理 (HTTP over TLS)，客户端无需安装 gost
+# 客户端直接配置 HTTPS 代理: joccboy.asia:61010
 
 services:
-  - name: http-proxy
-    addr: "127.0.0.1:1080"
+  - name: https-proxy
+    addr: ":61010"
     handler:
       type: http
+      auther: proxy-auth
     listener:
-      type: tcp
+      type: tls
+      tls:
+        certFile: /etc/nginx/ssl/joccboy.asia/joccboy.asia_nginx/joccboy.asia_bundle.crt
+        keyFile: /etc/nginx/ssl/joccboy.asia/joccboy.asia_nginx/joccboy.asia.key
+
+authers:
+  - name: proxy-auth
+    auths:
+      - username: "proxy"
+        password: "MyPassword"
