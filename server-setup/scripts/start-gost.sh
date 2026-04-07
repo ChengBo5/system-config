@@ -40,6 +40,14 @@ fi
 sed "s|__HOME__|${REAL_HOME}|g" "$SERVICE_TEMPLATE" \
     > /etc/systemd/system/${SERVICE_NAME}.service
 
+# 同步最新配置文件
+CONFIG_SRC="${SCRIPT_DIR}/configs/gost/config.yaml"
+CONFIG_DST="${REAL_HOME}/.system_config/gost/config.yaml"
+if [[ -f "$CONFIG_SRC" ]]; then
+    cp "$CONFIG_SRC" "$CONFIG_DST"
+    echo "配置文件已同步: $CONFIG_DST"
+fi
+
 systemctl daemon-reload
 systemctl enable ${SERVICE_NAME}
 systemctl restart ${SERVICE_NAME}
