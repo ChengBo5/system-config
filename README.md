@@ -8,13 +8,12 @@
 
 ```
 ~/.system_config/
-├── gost/
-│   ├── gost                  # gost 可执行文件
-│   └── config.yaml           # gost 转发规则配置
-└── 9router/
-    ├── .env                  # 9router 环境变量配置
-    └── ...                   # 9router 应用文件
+└── gost/
+    ├── gost                  # gost 可执行文件
+    └── config.yaml           # gost 转发规则配置
 ```
+
+9router 通过 `npm install -g 9router` 全局安装，启动参数通过 systemd service 指定。
 
 service 文件中的路径通过 `__HOME__` 占位符自动替换，迁移时无需手动改路径。
 
@@ -60,7 +59,7 @@ bash server-setup/scripts/install-python.sh
 ```bash
 bash server-setup/scripts/install-gost.sh          # 下载 gost
 sudo bash server-setup/scripts/start-gost.sh       # 注册 gost 服务
-bash server-setup/scripts/install-9router.sh       # 下载 9router
+bash server-setup/scripts/install-9router.sh       # npm 全局安装 9router
 sudo bash server-setup/scripts/start-9router.sh    # 注册 9router 服务
 sudo bash server-setup/scripts/install-nginx.sh    # 安装 nginx
 ```
@@ -87,9 +86,8 @@ HTTP 80 端口自动跳转 HTTPS 443。
 - systemd 服务名: `gost`
 
 ### 9router AI 路由
-- 程序路径: `~/.system_config/9router/`
-- 配置文件: `~/.system_config/9router/.env`
-- 监听地址: `127.0.0.1:8317`
+- 安装方式: `npm install -g 9router`
+- 监听地址: `0.0.0.0:8317`
 - systemd 服务名: `9router`
 - Dashboard: `https://joccboy.asia/reverse/dashboard`
 

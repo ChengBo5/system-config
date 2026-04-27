@@ -5,9 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=__USER__
-WorkingDirectory=__HOME__/.system_config/9router
-EnvironmentFile=__HOME__/.system_config/9router/.env
-ExecStart=/usr/bin/node __HOME__/.system_config/9router/node_modules/next/dist/bin/next start
+ExecStart=__NPM_GLOBAL_BIN__/9router --port 8317 --host 0.0.0.0 --no-browser --skip-update
 Restart=always
 RestartSec=5
 LimitNOFILE=65536
