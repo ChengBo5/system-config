@@ -1,0 +1,16 @@
+[Unit]
+Description=9router AI Router Service
+After=network.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__HOME__/.system_config/9router
+EnvironmentFile=__HOME__/.system_config/9router/.env
+ExecStart=/usr/bin/node __HOME__/.system_config/9router/node_modules/next/dist/bin/next start
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

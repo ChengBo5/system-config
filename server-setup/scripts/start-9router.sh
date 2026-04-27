@@ -2,19 +2,20 @@
 set -euo pipefail
 
 # ============================================
-# CLIProxyAPIPlus systemd 服务安装脚本
+# 9router systemd 服务安装脚本
 # 功能:
-#   1. 将 cliproxy.service 配置复制到 /etc/systemd/system/
-#   2. 自动替换 __HOME__ 为当前用户主目录
+#   1. 将 9router.service 配置复制到 /etc/systemd/system/
+#   2. 自动替换 __HOME__ 和 __USER__ 为实际值
 #   3. 注册为系统服务，开机自启，崩溃自动重启
-# 用法: sudo bash server-setup/scripts/start-cliproxy.sh
-# 前置条件: 先运行 install-cliproxy.sh
+# 用法: sudo bash server-setup/scripts/start-9router.sh
+# 前置条件: 先运行 install-9router.sh
 # ============================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SERVICE_TEMPLATE="${SCRIPT_DIR}/configs/cliproxy/cliproxy.service"
-SERVICE_NAME="cliproxy"
-REAL_HOME=$(eval echo "~${SUDO_USER:-$USER}")
+SERVICE_TEMPLATE="${SCRIPT_DIR}/configs/9router/9router.service"
+SERVICE_NAME="9router"
+REAL_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(eval echo "~${REAL_USER}")
 
 # 检查 root 权限
 if [[ $EUID -ne 0 ]]; then
@@ -28,24 +29,29 @@ if [[ ! -f "$SERVICE_TEMPLATE" ]]; then
     exit 1
 fi
 
-# 检查程序是否已安装
-if [[ ! -x "${REAL_HOME}/.system_config/cliproxy/cli-proxy-api-plus" ]]; then
-    echo "未找到程序: ${REAL_HOME}/.system_config/cliproxy/cli-proxy-api-plus"
-    echo "请先运行 install-cliproxy.sh"
+# 检查 9router 是否已安装
+if [[ ! -d "${REAL_HOME}/.system_config/9router" ]]; then
+    echo "未找到 9router: ${REAL_HOME}/.system_config/9router"
+    echo "请先运行 install-9router.sh"
     exit 1
 fi
 
-# 替换 __HOME__ 和 __USER__ 占位符为实际值，写入 systemd 目录
-sed -e "s|__HOME__|${REAL_HOME}|g" -e "s|__USER__|${SUDO_USER:-$USER}|g" "$SERVICE_TEMPLATE" \
+# 替换 __HOME__ 和 __USER__ 占位符，写入 systemd 目录
+sed -e "s|__HOME__|${REAL_HOME}|g" -e "s|__USER__|${REAL_USER}|g" "$SERVICE_TEMPLATE" \
     > /etc/systemd/system/${SERVICE_NAME}.service
 
 systemctl daemon-reload
 systemctl enable ${SERVICE_NAME}
 systemctl restart ${SERVICE_NAME}
 
-echo "CLIProxyAPIPlus 服务已安装并启动"
-echo "程序路径: ${REAL_HOME}/.system_config/cliproxy/cli-proxy-api-plus"
-echo "配置文件: ${REAL_HOME}/.system_config/cliproxy/config.yaml"
+# 检查状态
+echo ""
+systemctl status ${SERVICE_NAME} --no-pager
+
+echo ""
+echo "9router 服务已安装并启动"
+echo "安装目录: ${REAL_HOME}/.system_config/9router"
+echo "Dashboard: http://localhost:8317/dashboard"
 echo ""
 echo "常用命令:"
 echo "  systemctl status ${SERVICE_NAME}    # 查看状态"
