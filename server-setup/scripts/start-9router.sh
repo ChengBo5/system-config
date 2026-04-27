@@ -30,15 +30,15 @@ if [[ ! -f "$SERVICE_TEMPLATE" ]]; then
 fi
 
 # 检查 9router 是否已安装
-NPM_GLOBAL_BIN=$(sudo -u "$REAL_USER" npm bin -g 2>/dev/null || sudo -u "$REAL_USER" npm prefix -g 2>/dev/null | xargs -I{} echo "{}/bin")
-NINE_ROUTER_BIN="${NPM_GLOBAL_BIN}/9router"
+NINE_ROUTER_BIN=$(sudo -u "$REAL_USER" which 9router 2>/dev/null || echo "")
 
-if [[ ! -x "$NINE_ROUTER_BIN" ]]; then
-    echo "未找到 9router 命令: $NINE_ROUTER_BIN"
+if [[ -z "$NINE_ROUTER_BIN" || ! -x "$NINE_ROUTER_BIN" ]]; then
+    echo "未找到 9router 命令"
     echo "请先运行 install-9router.sh"
     exit 1
 fi
 
+NPM_GLOBAL_BIN=$(dirname "$NINE_ROUTER_BIN")
 echo "9router 路径: $NINE_ROUTER_BIN"
 
 # 替换占位符，写入 systemd 目录
