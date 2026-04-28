@@ -72,10 +72,10 @@ npm install -g 9router
 
 域名: `joccboy.asia`
 
-| 服务 | 外部访问地址 | 本地端口 | 说明 |
-|------|-------------|---------|------|
-| Gost 代理 | `joccboy.asia:61010` | `:61010` | HTTPS 代理 |
-| 9router | `https://joccboy.asia/router/` | `127.0.0.1:61020` | AI 路由服务 |
+| 服务 | 访问地址 | 端口 | 说明 |
+|------|---------|------|------|
+| Gost 代理 | `joccboy.asia:61010` | `:61010` | HTTPS 代理，自带 TLS，不经过 nginx |
+| 9router | `https://joccboy.asia/router/v1` | `127.0.0.1:61020` | AI 路由 API，通过 nginx 代理 |
 | MCP Market | `https://joccboy.asia/market/` | `127.0.0.1:8000` | SSE 长连接 |
 | MCP Account | `https://joccboy.asia/account/` | `127.0.0.1:8001` | SSE 长连接 |
 
@@ -83,18 +83,54 @@ HTTP 80 端口自动跳转 HTTPS 443。
 
 ## 服务说明
 
-### Gost 代理
+### Gost HTTPS 代理
 - 程序路径: `~/.system_config/gost/gost`
 - 配置文件: `~/.system_config/gost/config.yaml`
-- 监听端口: `:61010`
+- 监听端口: `:61010`（自带 TLS，不经过 nginx）
 - systemd 服务名: `gost`
+
+#### 客户端连接方式
+
+Gost 运行的是 HTTPS 代理（HTTP over TLS），客户端无需安装 gost，直接配置即可。
+
+**macOS 系统代理：**
+
+系统设置 → 网络 → Wi-Fi → 代理 → 安全 Web 代理 (HTTPS)：
+- 服务器: `joccboy.asia`
+- 端口: `61010`
+- 用户名: `proxy`
+- 密码: `MyPassword`
+
+**命令行（curl / wget）：**
+
+```bash
+export https_proxy=https://proxy:MyPassword@joccboy.asia:61010
+export http_proxy=https://proxy:MyPassword@joccboy.asia:61010
+
+# 测试
+curl -I https://www.google.com
+```
+
+**浏览器代理插件（SwitchyOmega 等）：**
+- 代理协议: HTTPS
+- 服务器: `joccboy.asia`
+- 端口: `61010`
+- 用户名: `proxy`
+- 密码: `MyPassword`
+
+**Git：**
+
+```bash
+git config --global http.proxy https://proxy:MyPassword@joccboy.asia:61010
+git config --global https.proxy https://proxy:MyPassword@joccboy.asia:61010
+```
 
 ### 9router AI 路由
 - 安装方式: `npm install -g 9router`
 - 监听地址: `0.0.0.0:61020`
 - 手动启动，不使用 systemd
-- Dashboard: `https://joccboy.asia/router/dashboard`
 - API: `https://joccboy.asia/router/v1`
+- 管理面板: `http://IP:61020/dashboard`（通过 IP 直连访问）
 
 ### Nginx HTTPS 入口
 - 统一 HTTPS 入口，按路径转发到各个后端服务
