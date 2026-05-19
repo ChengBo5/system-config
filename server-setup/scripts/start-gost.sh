@@ -6,7 +6,8 @@ set -euo pipefail
 # 功能:
 #   1. 将 gost.service 配置复制到 /etc/systemd/system/
 #   2. 自动替换 __HOME__ 为当前用户主目录
-#   3. 注册为系统服务，开机自启，崩溃自动重启
+#   3. 自动替换 __DOMAIN__ 为证书域名 (从 certs/ 目录检测)
+#   4. 注册为系统服务，开机自启，崩溃自动重启
 # 用法: sudo bash server-setup/scripts/start-gost.sh
 # 前置条件: 先运行 install-gost.sh
 # ============================================
@@ -40,12 +41,30 @@ fi
 sed "s|__HOME__|${REAL_HOME}|g" "$SERVICE_TEMPLATE" \
     > /etc/systemd/system/${SERVICE_NAME}.service
 
-# 同步最新配置文件
+# 同步最新配置文件 (替换 __DOMAIN__ 占位符)
 CONFIG_SRC="${SCRIPT_DIR}/configs/gost/config.yaml"
 CONFIG_DST="${REAL_HOME}/.system_config/gost/config.yaml"
-if [[ -f "$CONFIG_SRC" ]]; then
-    cp "$CONFIG_SRC" "$CONFIG_DST"
-    echo "配置文件已同步: $CONFIG_DST"
+CERTS_DIR="${SCRIPT_DIR}/configs/nginx/certs"
+
+# 从证书文件名检测域名
+DOMAIN=""
+for certfile in "$CERTS_DIR"/*_bundle.crt; do
+    [[ ! -f "$certfile" ]] && continue
+    DOMAIN=$(basename "$certfile" | sed 's/_bundle\.crt$//')
+    break
+done
+
+if [[ -z "$DOMAIN" ]]; then
+    echo "警告: 未在 $CERTS_DIR/ 中找到 *_bundle.crt，__DOMAIN__ 占位符不会被替换"
+    if [[ -f "$CONFIG_SRC" ]]; then
+        cp "$CONFIG_SRC" "$CONFIG_DST"
+    fi
+else
+    echo "检测到域名: $DOMAIN"
+    if [[ -f "$CONFIG_SRC" ]]; then
+        sed "s/__DOMAIN__/${DOMAIN}/g" "$CONFIG_SRC" > "$CONFIG_DST"
+        echo "配置文件已同步: $CONFIG_DST (域名: $DOMAIN)"
+    fi
 fi
 
 systemctl daemon-reload

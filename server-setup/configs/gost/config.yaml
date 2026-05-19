@@ -1,7 +1,9 @@
 # Gost v3 配置文件
 # 文档: https://gost.run/
 # HTTPS 代理 (HTTP over TLS)，客户端无需安装 gost
-# 客户端直接配置 HTTPS 代理: joccboy.asia:61010
+# 客户端直接配置 HTTPS 代理: __DOMAIN__:61010
+#
+# 注意: __DOMAIN__ 是占位符，由 start-gost.sh 根据证书文件名自动替换
 
 services:
   - name: https-proxy
@@ -12,8 +14,8 @@ services:
     listener:
       type: tls
       tls:
-        certFile: /etc/nginx/ssl/joccboy.asia/joccboy.asia_nginx/joccboy.asia_bundle.crt
-        keyFile: /etc/nginx/ssl/joccboy.asia/joccboy.asia_nginx/joccboy.asia.key
+        certFile: /etc/nginx/ssl/__DOMAIN___bundle.crt
+        keyFile: /etc/nginx/ssl/__DOMAIN__.key
 
 authers:
   - name: proxy-auth

@@ -40,29 +40,20 @@ sudo certbot --nginx -d your-domain.com
 - 证书：`/etc/letsencrypt/live/your-domain.com/fullchain.pem`
 - 私钥：`/etc/letsencrypt/live/your-domain.com/privkey.pem`
 
-### 4. 修改 Nginx 配置
+### 4. Nginx 配置
 
-编辑 `nginx_mcp.conf`，修改以下 3 处：
-
-```nginx
-# 第 1 处：修改域名（共 2 个地方）
-server_name your-domain.com;
-
-# 第 2 处：修改证书路径
-ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-```
-
-### 5. 部署 Nginx 配置
+Nginx 配置已统一到 `server-setup/configs/nginx/sites-available/joccboy.asia.conf`，
+通过根目录的部署脚本一键部署：
 
 ```bash
-sudo cp nginx_mcp.conf /etc/nginx/sites-available/mcp
-sudo ln -s /etc/nginx/sites-available/mcp /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+sudo bash server-setup/setup.sh
 ```
 
-### 6. 启动 MCP 服务
+如需修改域名或证书，替换 `server-setup/configs/nginx/certs/` 下的证书文件
+（按 `域名_bundle.crt` + `域名.key` 命名），然后重新运行 `sudo bash server-setup/setup.sh`。
+脚本会自动从证书文件名检测域名，无需手动改配置。
+
+### 5. 启动 MCP 服务
 
 ```bash
 # 启动 Market Data 服务
@@ -72,7 +63,7 @@ nohup python3 binance_market.py --transport sse --host 127.0.0.1 --port 8000 > m
 nohup python3 binance_account.py --transport sse --host 127.0.0.1 --port 8001 > account.log 2>&1 &
 ```
 
-### 7. 验证部署
+### 6. 验证部署
 
 ```bash
 # 检查服务是否运行

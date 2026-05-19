@@ -30,8 +30,9 @@ server-setup/
 │   │   ├── config.yaml                   # gost 配置模板
 │   │   └── gost.service                  # systemd 服务模板
 │   └── nginx/
-│       ├── certs/                        # SSL 证书 zip 包
-│       │   └── joccboy.asia_nginx.zip
+│       ├── certs/                        # SSL 证书 (按域名命名)
+│       │   ├── joccboy.asia_bundle.crt   # 完整证书链
+│       │   └── joccboy.asia.key          # 私钥
 │       └── sites-available/
 │           └── joccboy.asia.conf         # HTTPS 统一入口配置
 └── docs/
@@ -134,7 +135,9 @@ git config --global https.proxy https://proxy:MyPassword@joccboy.asia:61010
 
 ### Nginx HTTPS 入口
 - 统一 HTTPS 入口，按路径转发到各个后端服务
-- SSL 证书放在 `configs/nginx/certs/`，脚本自动解压部署到 `/etc/nginx/ssl/`
+- SSL 证书放在 `configs/nginx/certs/`（按 `域名_bundle.crt` + `域名.key` 命名）
+- 站点配置和 gost 配置使用 `__DOMAIN__` 占位符，脚本自动从证书文件名检测域名并替换
+- 换域名只需替换 certs/ 下的证书文件，重新运行 `setup.sh` 即可，无需手动改配置
 
 ### Miniconda
 - 安装到 `~/miniconda3`，不需要 sudo
@@ -183,8 +186,7 @@ rm -rf ~/.system_config/
 ## 迁移到新服务器
 
 1. 将项目目录拷贝到新服务器
-2. 执行 `sudo bash server-setup/setup.sh`（路径自动适配）
-3. 修改 `~/.system_config/` 下的配置文件
+2. 如果域名/证书有变化，替换 `configs/nginx/certs/` 下的证书文件（按 `域名_bundle.crt` / `域名.key` 命名）
+3. 执行 `sudo bash server-setup/setup.sh`（域名自动从证书文件名检测，无需手动改配置）
 4. 手动安装 9router: `npm install -g 9router`
-5. 如果域名/证书有变化，更新 `configs/nginx/` 下的对应文件
-6. 新服务器初始化参考 `docs/init-server.md`
+5. 新服务器初始化参考 `docs/init-server.md`

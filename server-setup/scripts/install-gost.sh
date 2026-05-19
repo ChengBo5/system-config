@@ -16,10 +16,24 @@ GOST_BIN="${INSTALL_DIR}/gost"
 REPO="go-gost/gost"
 
 # 同步配置文件到安装目录 (每次都覆盖，确保最新)
+# 替换 __DOMAIN__ 占位符为实际域名 (从证书文件名检测)
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+CERTS_DIR="${SCRIPT_DIR}/configs/nginx/certs"
+DOMAIN=""
+for certfile in "$CERTS_DIR"/*_bundle.crt; do
+    [[ ! -f "$certfile" ]] && continue
+    DOMAIN=$(basename "$certfile" | sed 's/_bundle\.crt$//')
+    break
+done
+
 if [[ -f "$SCRIPT_DIR/configs/gost/config.yaml" ]]; then
-    cp "$SCRIPT_DIR/configs/gost/config.yaml" "$INSTALL_DIR/config.yaml"
-    echo "配置文件已同步: $INSTALL_DIR/config.yaml"
+    if [[ -n "$DOMAIN" ]]; then
+        sed "s/__DOMAIN__/${DOMAIN}/g" "$SCRIPT_DIR/configs/gost/config.yaml" > "$INSTALL_DIR/config.yaml"
+        echo "配置文件已同步: $INSTALL_DIR/config.yaml (域名: $DOMAIN)"
+    else
+        cp "$SCRIPT_DIR/configs/gost/config.yaml" "$INSTALL_DIR/config.yaml"
+        echo "配置文件已同步: $INSTALL_DIR/config.yaml (未检测到域名，占位符未替换)"
+    fi
 fi
 
 # 通过 GitHub API 获取最新 release 的版本号
