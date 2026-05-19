@@ -81,6 +81,16 @@ echo "SSL 私钥已部署: $SSL_DIR/${DOMAIN}.key"
 # ---- 第四步: 部署站点配置 (模板替换 __DOMAIN__) ----
 # 将 sites-available/ 下的所有 .conf 模板中的 __DOMAIN__ 替换为实际域名
 # 生成最终配置到 /etc/nginx/sites-available/ 并启用
+
+# 先清理本脚本之前部署的旧站点配置 (避免 upstream 重复等冲突)
+# 删除 sites-enabled 中所有 .conf (保留 default 由后面单独处理)
+for old_conf in /etc/nginx/sites-enabled/*.conf; do
+    [[ -f "$old_conf" ]] && rm -f "$old_conf"
+done
+for old_conf in /etc/nginx/sites-available/*.conf; do
+    [[ -f "$old_conf" ]] && rm -f "$old_conf"
+done
+
 if [[ -d "$CONFIGS_DIR/sites-available" ]]; then
     for conf in "$CONFIGS_DIR/sites-available"/*.conf; do
         [[ ! -f "$conf" ]] && continue
