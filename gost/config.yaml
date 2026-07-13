@@ -64,5 +64,5 @@ services:
 authers:
   - name: proxy-auth
     auths:
-      - username: "proxy"
-        password: "CHANGE_ME"
+      - username: "bulusi"
+        password: "proxy_bulusi"
