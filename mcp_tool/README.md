@@ -2,14 +2,19 @@
 
 ## 架构说明
 
+对外 HTTPS 由根目录的 gost 统一负责（TLS 终止 + 转发），本服务只监听本地端口：
+
 ```
 客户端 (Kiro)
     ↓ HTTPS
-Nginx (443端口)
-    ↓ HTTP (内网)
-    ├─→ binance_market.py (127.0.0.1:8000)  → https://your-domain.com/market
-    └─→ binance_account.py (127.0.0.1:8001) → https://your-domain.com/account
+gost (为每个 MCP 服务开一个 TLS 端口)
+    ↓ HTTP (本机)
+    ├─→ binance_market.py (127.0.0.1:8000)
+    └─→ binance_account.py (127.0.0.1:8001)
 ```
+
+对外暴露方式见根目录 `README.md` 的「MCP 服务」一节：在 `gost/config.yaml` 里照
+9router/trade 的写法，为 8000 / 8001 各加一段 `tls` 监听 + `forwarder`，并放行对应安全组端口。
 
 ## 部署步骤
 
@@ -18,7 +23,6 @@ Nginx (443端口)
 ```bash
 cd mcp_tool
 pip3 install -r requirements.txt
-sudo apt install nginx certbot python3-certbot-nginx -y
 ```
 
 ### 2. 配置环境变量
@@ -30,30 +34,13 @@ API_SECRET=your_binance_api_secret
 TESTNET=false
 ```
 
-### 3. 申请 SSL 证书
+### 3. 对外 HTTPS（可选，由 gost 负责）
 
-```bash
-sudo certbot --nginx -d your-domain.com
-```
+本服务只监听本地端口，对外 HTTPS 交给根目录的 gost。若要对外暴露，在 `gost/config.yaml`
+里为 8000 / 8001 各加一段 `tls` 监听 + `forwarder`（写法参考 9router/trade），
+证书共用 `gost/ssl/`，并放行相应安全组端口。详见根目录 `README.md`。
 
-证书路径：
-- 证书：`/etc/letsencrypt/live/your-domain.com/fullchain.pem`
-- 私钥：`/etc/letsencrypt/live/your-domain.com/privkey.pem`
-
-### 4. Nginx 配置
-
-Nginx 配置已统一到 `server-setup/configs/nginx/sites-available/joccboy.asia.conf`，
-通过根目录的部署脚本一键部署：
-
-```bash
-sudo bash server-setup/setup.sh
-```
-
-如需修改域名或证书，替换 `server-setup/configs/nginx/certs/` 下的证书文件
-（按 `域名_bundle.crt` + `域名.key` 命名），然后重新运行 `sudo bash server-setup/setup.sh`。
-脚本会自动从证书文件名检测域名，无需手动改配置。
-
-### 5. 启动 MCP 服务
+### 4. 启动 MCP 服务
 
 ```bash
 # 启动 Market Data 服务
@@ -63,31 +50,31 @@ nohup python3 binance_market.py --transport sse --host 127.0.0.1 --port 8000 > m
 nohup python3 binance_account.py --transport sse --host 127.0.0.1 --port 8001 > account.log 2>&1 &
 ```
 
-### 6. 验证部署
+### 5. 验证部署
 
 ```bash
 # 检查服务是否运行
 ps aux | grep binance
 
-# 测试连接
-curl https://your-domain.com/health
-curl https://your-domain.com/market
-curl https://your-domain.com/account
+# 本地测试（对外则换成 gost 暴露的 https://域名:端口/）
+curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8001/health
 ```
 
 ## 客户端配置
 
-在本地 `.kiro/settings/mcp.json` 中添加：
+对外用 gost 暴露后，在本地 `.kiro/settings/mcp.json` 中填对应的 `https://域名:端口/` 地址
+（端口为你在 `gost/config.yaml` 里为 market / account 分配的对外端口）：
 
 ```json
 {
   "mcpServers": {
     "binance-market": {
-      "url": "https://your-domain.com/market",
+      "url": "https://korea.joccboy.asia:<market端口>/",
       "transport": "sse"
     },
     "binance-account": {
-      "url": "https://your-domain.com/account",
+      "url": "https://korea.joccboy.asia:<account端口>/",
       "transport": "sse"
     }
   }
@@ -107,18 +94,11 @@ pkill -f binance_account.py
 # 查看日志
 tail -f market.log
 tail -f account.log
-
-# 查看 Nginx 日志
-sudo tail -f /var/log/nginx/mcp_error.log
-sudo tail -f /var/log/nginx/mcp_access.log
-
-# 重启 Nginx
-sudo systemctl reload nginx
 ```
 
 ## 故障排查
 
-### 502 错误
+### 连接不上 / 502
 ```bash
 # 检查服务是否运行
 ps aux | grep binance
@@ -130,13 +110,10 @@ netstat -tlnp | grep 8001
 # 查看日志
 tail -f market.log
 tail -f account.log
+
+# 检查 gost 是否在监听对外端口、转发是否正确
+pm2 logs gost
 ```
 
-### SSL 证书错误
-```bash
-# 检查证书有效期
-sudo certbot certificates
-
-# 手动续期
-sudo certbot renew
-```
+### SSL 证书问题
+证书由 gost 统一加载（`gost/ssl/`）。检查/更换证书后 `pm2 restart gost` 即可。

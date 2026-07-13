@@ -1,0 +1,68 @@
+# ============================================================
+# Gost v3 配置 - 纯 gost 方案（一个进程，三项服务）
+# 文档: https://gost.run/
+#
+# 服务清单:
+#   1. 翻墙代理  korea.joccboy.asia:443    HTTP over TLS + 账号密码
+#   2. 9router   korea.joccboy.asia:61001  TLS 终止 → 转发本地 127.0.0.1:61000
+#   3. trade     korea.joccboy.asia:61014  TLS 终止 → 转发本地 127.0.0.1:61013
+#
+# 三项服务共用同一张证书（证书只认域名不认端口）。
+# SSL 路径为相对路径 ssl/，相对 gost 进程的工作目录（即本 gost/ 目录）。
+# 请把证书放到 gost/ssl/ 下，文件名: ssl.crt (完整链) / ssl.key (私钥)。
+#
+# 运行（工作目录必须是本 gost/ 目录，否则相对路径找不到证书）:
+#   cd gost && ./gost -C config.yaml
+# 生产用 pm2 托管（详见 README.md）。
+# ============================================================
+
+services:
+  # 1) 翻墙代理: 客户端配置「HTTPS 代理 = korea.joccboy.asia:443」，填下方账号密码
+  - name: https-proxy
+    addr: ":443"
+    handler:
+      type: http
+      auther: proxy-auth
+    listener:
+      type: tls
+      tls:
+        certFile: ssl/ssl.crt
+        keyFile: ssl/ssl.key
+
+  # 2) 9router: 在 61001 终止 TLS，把明文 HTTP 原样转发到本地 61000
+  #    根路径透传，/v1、/v1/models 等无需改写；裸转发不缓冲，SSE 流式天然可用
+  - name: 9router
+    addr: ":61001"
+    handler:
+      type: tcp
+    listener:
+      type: tls
+      tls:
+        certFile: ssl/ssl.crt
+        keyFile: ssl/ssl.key
+    forwarder:
+      nodes:
+        - name: 9router-backend
+          addr: 127.0.0.1:61000
+
+  # 3) trade: 在 61014 终止 TLS，转发到本地 61013
+  - name: trade
+    addr: ":61014"
+    handler:
+      type: tcp
+    listener:
+      type: tls
+      tls:
+        certFile: ssl/ssl.crt
+        keyFile: ssl/ssl.key
+    forwarder:
+      nodes:
+        - name: trade-backend
+          addr: 127.0.0.1:61013
+
+# 代理账号密码（请务必改成你自己的强密码）
+authers:
+  - name: proxy-auth
+    auths:
+      - username: "proxy"
+        password: "CHANGE_ME"
